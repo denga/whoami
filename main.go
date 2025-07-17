@@ -277,7 +277,9 @@ func main() {
 
 	if config.Verbose {
 		log.Printf("Starting whoami server on port %d", config.Port)
-		log.Printf("Name: %s", config.Name)
+		if config.Name != "" {
+			log.Printf("Name: %s", config.Name)
+		}
 		log.Printf("Verbose logging enabled")
 	}
 
