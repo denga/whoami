@@ -153,6 +153,7 @@ func TestRootHandler(t *testing.T) {
 		"Architecture:",
 		"Runtime:",
 		"Time:",
+		"Version:",
 		"Headers:",
 		"User-Agent: test-agent",
 		"Environment:",
@@ -233,6 +234,10 @@ func TestAPIHandler(t *testing.T) {
 	if info.Time == "" {
 		t.Error("Expected Time to be populated")
 	}
+
+	if info.Version == "" {
+		t.Error("Expected Version to be populated")
+	}
 }
 
 func TestHealthHandler(t *testing.T) {
@@ -262,6 +267,10 @@ func TestHealthHandler(t *testing.T) {
 	if response["time"] == "" {
 		t.Error("Expected time to be populated")
 	}
+
+	if response["version"] == "" {
+		t.Error("Expected version to be populated")
+	}
 }
 
 func TestFormatAsText(t *testing.T) {
@@ -281,6 +290,7 @@ func TestFormatAsText(t *testing.T) {
 		Architecture: "amd64",
 		Runtime:      "go1.21.0",
 		Time:         "2023-01-01T12:00:00Z",
+		Version:      "dev",
 	}
 
 	result := formatAsText(info)
@@ -299,6 +309,7 @@ func TestFormatAsText(t *testing.T) {
 		"Architecture: amd64",
 		"Runtime: go1.21.0",
 		"Time: 2023-01-01T12:00:00Z",
+		"Version: dev",
 		"Headers:",
 		"  Accept: text/html",
 		"  User-Agent: test-agent",
@@ -357,6 +368,10 @@ func TestGetRequestInfo(t *testing.T) {
 
 	if len(info.IP) == 0 {
 		t.Error("Expected at least one IP address")
+	}
+
+	if info.Version == "" {
+		t.Error("Expected Version to be populated")
 	}
 }
 

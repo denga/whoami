@@ -52,18 +52,6 @@ func init() {
 	flag.IntVar(&config.Port, "port", getEnvAsInt("WHOAMI_PORT_NUMBER", 80), "The port number")
 	flag.StringVar(&config.Name, "name", os.Getenv("WHOAMI_NAME"), "The name")
 	flag.BoolVar(&config.Verbose, "verbose", false, "Enable verbose logging")
-
-	// Add version flag
-	versionFlag := flag.Bool("version", false, "Show version information")
-	flag.Parse()
-
-	if *versionFlag {
-		fmt.Printf("whoami %s\n", version)
-		fmt.Printf("  commit: %s\n", commit)
-		fmt.Printf("  built: %s\n", date)
-		fmt.Printf("  built by: %s\n", builtBy)
-		os.Exit(0)
-	}
 }
 
 func getEnvAsInt(key string, defaultValue int) int {
@@ -257,6 +245,18 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Add version flag
+	versionFlag := flag.Bool("version", false, "Show version information")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("whoami %s\n", version)
+		fmt.Printf("  commit: %s\n", commit)
+		fmt.Printf("  built: %s\n", date)
+		fmt.Printf("  built by: %s\n", builtBy)
+		os.Exit(0)
+	}
+
 	if config.Verbose {
 		log.Printf("Starting whoami server on port %d", config.Port)
 		log.Printf("Name: %s", config.Name)
