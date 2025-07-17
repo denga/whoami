@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache: true
+          cache: false
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
