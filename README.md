@@ -4,6 +4,7 @@
 [![Release](https://github.com/denga/whoami/actions/workflows/release.yml/badge.svg)](https://github.com/denga/whoami/actions/workflows/release.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/denga/whoami)](https://hub.docker.com/r/denga/whoami)
 [![Go Report Card](https://goreportcard.com/badge/github.com/denga/whoami)](https://goreportcard.com/report/github.com/denga/whoami)
+[![codecov](https://codecov.io/gh/denga/whoami/graph/badge.svg?token=ZPOT2IAS9N)](https://codecov.io/gh/denga/whoami)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A tiny Go webserver that prints OS information and HTTP request details to output. Perfect for debugging, testing, and understanding network configurations in containerized environments.
