@@ -113,7 +113,6 @@ dockers:
       - "--platform=linux/amd64"
     extra_files:
       - go.mod
-      - go.sum
       - main.go
 
 release:
