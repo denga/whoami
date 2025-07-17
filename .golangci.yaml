@@ -1,0 +1,221 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+  skip-dirs:
+    - vendor
+  skip-files: []
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  
+  govet:
+    check-shadowing: true
+    enable-all: true
+  
+  gocyclo:
+    min-complexity: 15
+  
+  dupl:
+    threshold: 100
+  
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  
+  misspell:
+    locale: US
+    ignore-words:
+      - whoami
+  
+  lll:
+    line-length: 120
+  
+  goimports:
+    local-prefixes: github.com/denga/whoami
+  
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - wrapperFunc
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - importShadow
+  
+  funlen:
+    lines: 100
+    statements: 50
+  
+  gocognit:
+    min-complexity: 20
+  
+  nestif:
+    min-complexity: 5
+  
+  gosec:
+    includes:
+      - G401
+      - G501
+      - G502
+      - G503
+      - G504
+      - G505
+    excludes:
+      - G104
+    config:
+      G306: "0600"
+  
+  revive:
+    min-confidence: 0
+    rules:
+      - name: var-naming
+      - name: package-comments
+      - name: exported
+      - name: var-declaration
+      - name: blank-imports
+      - name: context-as-argument
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: increment-decrement
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: indent-error-flow
+      - name: superfluous-else
+  
+  wsl:
+    strict-append: true
+    allow-assign-and-call: true
+    allow-multiline-assign: true
+    allow-cuddle-declarations: false
+    allow-trailing-comment: false
+    force-case-trailing-whitespace: 0
+    force-err-cuddling: false
+    allow-separated-leading-comment: false
+
+linters:
+  disable-all: true
+  enable:
+    # Error detection
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    
+    # Style
+    - gofmt
+    - goimports
+    - revive
+    - misspell
+    - unconvert
+    
+    # Complexity
+    - gocyclo
+    - gocognit
+    - nestif
+    - funlen
+    
+    # Performance
+    - prealloc
+    - gocritic
+    
+    # Security
+    - gosec
+    
+    # Best practices
+    - goconst
+    - dupl
+    - lll
+    - wsl
+    - whitespace
+    - asciicheck
+    - bodyclose
+    - contextcheck
+    - durationcheck
+    - errorlint
+    - exportloopref
+    - forcetypeassert
+    - goheader
+    - goprintffuncname
+    - importas
+    - makezero
+    - nakedret
+    - nilerr
+    - nolintlint
+    - predeclared
+    - rowserrcheck
+    - sqlclosecheck
+    - tenv
+    - tparallel
+    - unparam
+    - wastedassign
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - funlen
+        - goconst
+        - gocognit
+        - nestif
+    
+    # Exclude lll issues for long lines with go:generate
+    - linters:
+        - lll
+      source: "^//go:generate "
+    
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA9003:"
+    
+    # Exclude gosec for test files
+    - path: _test\.go
+      text: "G404:"
+      linters:
+        - gosec
+    
+    # Allow embedding in main package
+    - linters:
+        - revive
+      text: "package-comments"
+      path: main\.go
+  
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+
+severity:
+  default-severity: error
+  case-sensitive: false
+  rules:
+    - linters:
+        - revive
+      severity: warning 

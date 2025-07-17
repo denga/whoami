@@ -1,0 +1,158 @@
+version: 2
+
+project_name: whoami
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: whoami
+    main: ./main.go
+    binary: whoami
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - "386"
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - "6"
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+      - -X main.builtBy=goreleaser
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
+
+dockers:
+  - image_templates:
+      - "denga/{{.ProjectName}}:latest"
+      - "denga/{{.ProjectName}}:{{ .Tag }}"
+      - "denga/{{.ProjectName}}:v{{ .Major }}"
+      - "denga/{{.ProjectName}}:v{{ .Major }}.{{ .Minor }}"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source=https://github.com/denga/whoami"
+      - "--label=org.opencontainers.image.description=Tiny Go webserver that prints OS information and HTTP request to output"
+      - "--label=org.opencontainers.image.licenses=MIT"
+      - "--platform=linux/amd64"
+    extra_files:
+      - go.mod
+      - go.sum
+      - main.go
+
+release:
+  prerelease: auto
+  name_template: "{{.ProjectName}}-v{{.Version}}"
+  header: |
+    ## Changes
+
+    Welcome to this new release!
+
+  footer: |
+    ## Docker Images
+
+    Docker images are available on Docker Hub:
+    
+    ```bash
+    docker pull denga/whoami:{{.Tag}}
+    docker pull denga/whoami:latest
+    ```
+
+    ## Install
+
+    ### Binary
+
+    Download the pre-compiled binaries from the [releases page](https://github.com/denga/whoami/releases) and copy to the desired location.
+
+    ### Docker
+
+    ```bash
+    docker run --rm -p 80:80 denga/whoami:{{.Tag}}
+    ```
+
+    ### From source
+
+    ```bash
+    git clone https://github.com/denga/whoami.git
+    cd whoami
+    go build -o whoami main.go
+    ```
+
+announce:
+  skip: '{{gt .Patch 0}}' 
