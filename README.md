@@ -13,7 +13,7 @@ A tiny Go webserver that prints OS information and HTTP request details to outpu
 
 - **Lightweight**: Minimal Docker image built from scratch (< 10MB)
 - **Request Details**: Shows complete HTTP request information
--  **System Info**: Displays OS, architecture, and runtime details
+- **System Info**: Displays OS, architecture, and runtime details
 - **Network Info**: Local IPs, real client IP detection
 - **Multiple Formats**: Text and JSON output
 - **Fast**: Built with Go for high performance
