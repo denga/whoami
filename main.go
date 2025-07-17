@@ -1,3 +1,4 @@
+// Package main implements a tiny Go webserver that prints OS information and HTTP request details.
 package main
 
 import (
@@ -15,12 +16,21 @@ import (
 	"time"
 )
 
+const (
+	// ContentTypeJSON is the MIME type for JSON responses.
+	ContentTypeJSON = "application/json"
+	// ContentTypeText is the MIME type for plain text responses.
+	ContentTypeText = "text/plain"
+)
+
+// Config holds the application configuration settings.
 type Config struct {
 	Port    int
 	Name    string
 	Verbose bool
 }
 
+// RequestInfo contains all information about an HTTP request and the system environment.
 type RequestInfo struct {
 	Hostname     string            `json:"hostname"`
 	Name         string            `json:"name,omitempty"`
@@ -182,7 +192,7 @@ func formatAsText(info *RequestInfo) string {
 	sb.WriteString(fmt.Sprintf("Version: %s\n", info.Version))
 
 	sb.WriteString("\nHeaders:\n")
-	var headerKeys []string
+	headerKeys := make([]string, 0, len(info.Headers))
 	for key := range info.Headers {
 		headerKeys = append(headerKeys, key)
 	}
@@ -192,7 +202,7 @@ func formatAsText(info *RequestInfo) string {
 	}
 
 	sb.WriteString("\nEnvironment:\n")
-	var envKeys []string
+	envKeys := make([]string, 0, len(info.Environment))
 	for key := range info.Environment {
 		envKeys = append(envKeys, key)
 	}
@@ -210,8 +220,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := getRequestInfo(r)
-	w.Header().Set("Content-Type", "text/plain")
-	fmt.Fprint(w, formatAsText(info))
+	w.Header().Set("Content-Type", ContentTypeText)
+	if _, err := fmt.Fprint(w, formatAsText(info)); err != nil {
+		if config.Verbose {
+			log.Printf("Error writing response: %v", err)
+		}
+	}
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
@@ -220,7 +234,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := getRequestInfo(r)
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", ContentTypeJSON)
 
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
@@ -235,13 +249,17 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s %s from %s", r.Method, r.URL.Path, getRealIP(r))
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", ContentTypeJSON)
 	response := map[string]string{
 		"status":  "ok",
 		"time":    time.Now().Format(time.RFC3339),
 		"version": version,
 	}
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		if config.Verbose {
+			log.Printf("Error encoding health response: %v", err)
+		}
+	}
 }
 
 func main() {
@@ -270,7 +288,14 @@ func main() {
 	addr := fmt.Sprintf(":%d", config.Port)
 	log.Printf("Server listening on %s", addr)
 
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	server := &http.Server{
+		Addr:         addr,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal("Server failed to start:", err)
 	}
 }

@@ -27,8 +27,14 @@ func TestGetEnvAsInt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.envValue != "" {
-				os.Setenv(tt.envKey, tt.envValue)
-				defer os.Unsetenv(tt.envKey)
+				if err := os.Setenv(tt.envKey, tt.envValue); err != nil {
+					t.Fatalf("Failed to set environment variable: %v", err)
+				}
+				defer func() {
+					if err := os.Unsetenv(tt.envKey); err != nil {
+						t.Logf("Failed to unset environment variable: %v", err)
+					}
+				}()
 			}
 
 			result := getEnvAsInt(tt.envKey, tt.defaultValue)
@@ -166,6 +172,30 @@ func TestRootHandler(t *testing.T) {
 	}
 }
 
+// validateRequestInfo validates common RequestInfo fields.
+func validateRequestInfo(t *testing.T, info *RequestInfo) {
+	t.Helper()
+
+	if len(info.Environment) == 0 {
+		t.Error("Expected environment variables to be populated")
+	}
+	if info.OS == "" {
+		t.Error("Expected OS to be populated")
+	}
+	if info.Architecture == "" {
+		t.Error("Expected Architecture to be populated")
+	}
+	if info.Runtime == "" {
+		t.Error("Expected Runtime to be populated")
+	}
+	if info.Time == "" {
+		t.Error("Expected Time to be populated")
+	}
+	if info.Version == "" {
+		t.Error("Expected Version to be populated")
+	}
+}
+
 func TestAPIHandler(t *testing.T) {
 	// Set up config for testing
 	originalConfig := config
@@ -177,7 +207,6 @@ func TestAPIHandler(t *testing.T) {
 	req.Header.Set("X-Real-IP", "10.0.0.1")
 
 	rr := httptest.NewRecorder()
-
 	apiHandler(rr, req)
 
 	if rr.Code != http.StatusOK {
@@ -185,8 +214,8 @@ func TestAPIHandler(t *testing.T) {
 	}
 
 	contentType := rr.Header().Get("Content-Type")
-	if contentType != "application/json" {
-		t.Errorf("Expected Content-Type application/json, got %s", contentType)
+	if contentType != ContentTypeJSON {
+		t.Errorf("Expected Content-Type %s, got %s", ContentTypeJSON, contentType)
 	}
 
 	var info RequestInfo
@@ -194,50 +223,25 @@ func TestAPIHandler(t *testing.T) {
 		t.Fatalf("Failed to unmarshal JSON response: %v", err)
 	}
 
-	// Verify JSON structure and values
+	// Verify specific values
 	if info.Name != "test-server" {
 		t.Errorf("Expected Name 'test-server', got '%s'", info.Name)
 	}
-
 	if info.URL != "/api?test=value" {
 		t.Errorf("Expected URL '/api?test=value', got '%s'", info.URL)
 	}
-
 	if info.Method != "POST" {
 		t.Errorf("Expected Method 'POST', got '%s'", info.Method)
 	}
-
 	if info.RealIP != "10.0.0.1" {
 		t.Errorf("Expected RealIP '10.0.0.1', got '%s'", info.RealIP)
 	}
-
 	if info.Headers["User-Agent"] != "test-agent" {
 		t.Errorf("Expected User-Agent 'test-agent', got '%s'", info.Headers["User-Agent"])
 	}
 
-	if len(info.Environment) == 0 {
-		t.Error("Expected environment variables to be populated")
-	}
-
-	if info.OS == "" {
-		t.Error("Expected OS to be populated")
-	}
-
-	if info.Architecture == "" {
-		t.Error("Expected Architecture to be populated")
-	}
-
-	if info.Runtime == "" {
-		t.Error("Expected Runtime to be populated")
-	}
-
-	if info.Time == "" {
-		t.Error("Expected Time to be populated")
-	}
-
-	if info.Version == "" {
-		t.Error("Expected Version to be populated")
-	}
+	// Validate common fields
+	validateRequestInfo(t, &info)
 }
 
 func TestHealthHandler(t *testing.T) {
@@ -251,8 +255,8 @@ func TestHealthHandler(t *testing.T) {
 	}
 
 	contentType := rr.Header().Get("Content-Type")
-	if contentType != "application/json" {
-		t.Errorf("Expected Content-Type application/json, got %s", contentType)
+	if contentType != ContentTypeJSON {
+		t.Errorf("Expected Content-Type %s, got %s", ContentTypeJSON, contentType)
 	}
 
 	var response map[string]string
@@ -333,7 +337,7 @@ func TestGetRequestInfo(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "/test?param=value", nil)
 	req.Header.Set("User-Agent", "test-agent")
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", ContentTypeJSON)
 	req.RemoteAddr = "192.168.1.100:1234"
 
 	info := getRequestInfo(req)
@@ -358,21 +362,16 @@ func TestGetRequestInfo(t *testing.T) {
 		t.Errorf("Expected User-Agent 'test-agent', got '%s'", info.Headers["User-Agent"])
 	}
 
-	if info.Headers["Accept"] != "application/json" {
-		t.Errorf("Expected Accept 'application/json', got '%s'", info.Headers["Accept"])
-	}
-
-	if len(info.Environment) == 0 {
-		t.Error("Expected environment variables to be populated")
+	if info.Headers["Accept"] != ContentTypeJSON {
+		t.Errorf("Expected Accept '%s', got '%s'", ContentTypeJSON, info.Headers["Accept"])
 	}
 
 	if len(info.IP) == 0 {
 		t.Error("Expected at least one IP address")
 	}
 
-	if info.Version == "" {
-		t.Error("Expected Version to be populated")
-	}
+	// Validate common fields
+	validateRequestInfo(t, info)
 }
 
 // Benchmark tests
